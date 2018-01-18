@@ -42,20 +42,20 @@ If your project involves a fixed width, this script will help to convert pixels 
   border: 0.9375vw solid black;
   border-bottom-width: 1px;
   font-size: 4.375vw;
-  line-height: 6.25vw;
+  line-height: 3.52113vh;
 }
 
 .class2 {
   border: 1px solid black;
   margin-bottom: 1px;
   font-size: 6.25vw;
-  line-height: 9.375vw;
+  line-height: 5.28169vh;
 }
 
-@media (min-width: 234.375vw) {
+@media (min-width: 750px) {
   .class3 {
     font-size: 5vw;
-    line-height: 6.875vw;
+    line-height: 3.87324vh;
   }
 }
 ```
@@ -90,7 +90,7 @@ Default:
   viewportWidth: 320,
   viewportHeight: 568,
   unitPrecision: 5,
-  viewportUnit: 'vw',
+  vhForHeightProps: true,
   selectorBlackList: [],
   minPixelValue: 1,
   mediaQuery: false
@@ -99,7 +99,7 @@ Default:
 - `viewportWidth` (Number) The width of the viewport.
 - `viewportHeight` (Number) The height of the viewport.
 - `unitPrecision` (Number) The decimal numbers to allow the REM units to grow to.
-- `viewportUnit` (String) Expected units.
+- `vhForHeightProps` (Boolean) Is use `vh` for css properties which contain `height`, case insensitive.
 - `selectorBlackList` (Array) The selectors to ignore and leave as px.
     - If value is string, it checks to see if selector contains the string.
         - `['body']` will match `.body-class`
@@ -121,7 +121,6 @@ gulp.task('css', function () {
     var processors = [
         pxtoviewport({
             viewportWidth: 320,
-            viewportUnit: 'vmin'
         })
     ];
 
