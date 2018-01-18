@@ -11,11 +11,16 @@ var objectAssign = require('object-assign');
 // !singlequotes|!doublequotes|!url()|pixelunit
 var pxRegex = /"[^"]+"|'[^']+'|url\([^\)]+\)|(\d*\.?\d+)px/ig;
 
+/**
+  Actually forked repo from evrone only handled vw unit, it will broken when using vh
+  So first we give two option: 1. all convert to vw 2. vw for width and vh for height/line-height. To fit my requirement. 
+  vh for height will make when actual viewport height and width's ratio change a lot, the page can have a consistent experience
+*/
 var defaults = {
   viewportWidth: 320,
-  viewportHeight: 568, // not now used; TODO: need for different units and math for different properties
+  viewportHeight: 568,
   unitPrecision: 5,
-  viewportUnit: 'vw',
+  vhForHeightProps: true,
   selectorBlackList: [],
   minPixelValue: 1,
   mediaQuery: false
@@ -24,7 +29,7 @@ var defaults = {
 module.exports = postcss.plugin('postcss-px-to-viewport', function (options) {
 
   var opts = objectAssign({}, defaults, options);
-  var pxReplace = createPxReplace(opts.viewportWidth, opts.minPixelValue, opts.unitPrecision, opts.viewportUnit);
+  var pxReplace = createPxReplace(opts);
 
   return function (css) {
 
@@ -34,26 +39,32 @@ module.exports = postcss.plugin('postcss-px-to-viewport', function (options) {
 
       if (blacklistedSelector(opts.selectorBlackList, decl.parent.selector)) return;
 
-      decl.value = decl.value.replace(pxRegex, pxReplace);
+      // TODO: maybe more precise match
+      var isUseVh = opts.vhForHeightProps && (decl.prop.search(/height/i)!==-1)
+      decl.value = decl.value.replace(pxRegex, pxReplace(isUseVh));
     });
 
     if (opts.mediaQuery) {
       css.walkAtRules('media', function (rule) {
         if (rule.params.indexOf('px') === -1) return;
-        rule.params = rule.params.replace(pxRegex, pxReplace);
+        rule.params = rule.params.replace(pxRegex, pxReplace(false));
       });
     }
 
   };
 });
 
-function createPxReplace(viewportSize, minPixelValue, unitPrecision, viewportUnit) {
-  return function (m, $1) {
-    if (!$1) return m;
-    var pixels = parseFloat($1);
-    if (pixels <= minPixelValue) return m;
-    return toFixed((pixels / viewportSize * 100), unitPrecision) + viewportUnit;
-  };
+function createPxReplace(opts) {
+  return function (isUseVh) {
+    return function (m, $1) {
+      if (!$1) return m;
+      var pixels = parseFloat($1);
+      if (pixels <= opts.minPixelValue) return m;
+      return isUseVh ? 
+      (toFixed((pixels / opts.viewportHeight * 100), opts.unitPrecision) + 'vh') :
+      (toFixed((pixels / opts.viewportWidth * 100), opts.unitPrecision) + 'vw');
+    };
+  }
 }
 
 function toFixed(number, precision) {
